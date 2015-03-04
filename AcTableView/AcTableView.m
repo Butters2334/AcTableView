@@ -10,13 +10,9 @@
 #import <CommonCrypto/CommonHMAC.h>//md5需要
 
 #pragma mark block存储相关
-@class AcContentEntity;
-@interface AcHeadEntity : NSObject 
+@interface AcHeadEntity:NSObject
 @property (nonatomic,copy)AcHeadViewBlock viewBlock;
-/**AcContentEntity数组,head对应的子cell*/
-@property (nonatomic,strong)NSMutableArray *contentEntitys;
 +(instancetype)entity:(AcHeadViewBlock)viewBlock;
--(void)addContentEntitysObject:(AcContentEntity *)entity;
 @end
 @implementation AcHeadEntity
 +(instancetype)entity:(AcHeadViewBlock)viewBlock
@@ -34,19 +30,32 @@
         entity;
     });
 }
--(void)addContentEntitysObject:(AcContentEntity *)entity
+@end
+@interface AcFootEntity:NSObject
+@property (nonatomic,copy)AcFootViewBlock viewBlock;
++(instancetype)entity:(AcFootViewBlock)viewBlock;
+@end
+@implementation AcFootEntity
++(instancetype)entity:(AcFootViewBlock)viewBlock
 {
-    if(self.contentEntitys==nil)
-    {
-        self.contentEntitys = [NSMutableArray new];
-    }
-    [self.contentEntitys addObject:entity];
+    return ({
+        AcFootEntity *entity = [AcFootEntity new];
+        entity.viewBlock = viewBlock;
+        if(entity.viewBlock==nil)
+        {
+            entity.viewBlock=^AcFooterView*{
+                return nil;
+            };
+        }
+        entity;
+    });
 }
 @end
-
 @interface AcContentEntity:NSObject
 @property (nonatomic,copy)AcContentViewBlock viewBlock;
 @property (nonatomic,copy)AcContentEventBlock eventBlock;
++(instancetype)entity:(AcContentViewBlock)viewBlock;
++(instancetype)entity:(AcContentViewBlock)viewBlock eventBlock:(AcContentEventBlock)eventBlock;
 @end
 @implementation AcContentEntity
 +(instancetype)entity:(AcContentViewBlock)viewBlock
@@ -63,6 +72,34 @@
     });
 }
 @end
+//主要视图管理类
+@interface AcEntityModel : NSObject
+@property (nonatomic,strong)AcHeadEntity *headEntity;
+/**AcContentEntity数组,head对应的子cell*/
+@property (nonatomic,strong)NSMutableArray *contentEntitys;
+/**AcFootEntity*/
+@property (nonatomic,strong)AcFootEntity *footEntity;
++(instancetype)newModel:(AcHeadViewBlock)viewBlock;
+-(void)addContentEntitysObject:(AcContentEntity *)entity;
+@end
+@implementation AcEntityModel
++(instancetype)newModel:(AcHeadViewBlock)viewBlock
+{
+    return ({
+        AcEntityModel *model = [AcEntityModel new];
+        model.headEntity=[AcHeadEntity entity:viewBlock];
+        model;
+    });
+}
+-(void)addContentEntitysObject:(AcContentEntity *)entity
+{
+    if(self.contentEntitys==nil)
+    {
+        self.contentEntitys = [NSMutableArray new];
+    }
+    [self.contentEntitys addObject:entity];
+}
+@end
 
 #pragma mark 视图相关实体类
 @implementation AcTableViewCell
@@ -77,7 +114,8 @@
 
 @implementation AcHeaderView
 @end
-
+@implementation AcFooterView
+@end
 @implementation AcContentView
 @end
 
@@ -160,7 +198,7 @@
 /**cell重用标识符*/
 @property (nonatomic,strong)NSString *cellIdentifier;
 /**head视图数据实体数组*/
-@property (nonatomic,strong)NSMutableArray *headEntityList;
+@property (nonatomic,strong)NSMutableArray *entityModelList;
 ///**内容视图数据实体数组*/
 //@property (nonatomic,strong)NSArray *contentEntityList;
 @end
@@ -196,13 +234,26 @@
  */
 -(void)addHeadView:(AcHeadViewBlock)headViewBlock
 {
-    AcHeadEntity *entity = [AcHeadEntity entity:headViewBlock];
-    if(self.headEntityList==nil)
+    AcEntityModel *entity = [AcEntityModel newModel:headViewBlock];
+    if(self.entityModelList==nil)
     {
-        self.headEntityList = [NSMutableArray new];
+        self.entityModelList = [NSMutableArray new];
     }
-    [self.headEntityList addObject:entity];
+    [self.entityModelList addObject:entity];
 }
+/**
+ *  添加一个foot视图,只添加在当前的head对应的视图上面,重复添加会重置原来的foot视图block
+ */
+-(void)addFootView:(AcFootViewBlock)footViewBlock
+{
+    if(self.entityModelList.count==0)
+    {
+        [self addHeadView:nil];
+    }
+    AcEntityModel *headEntity = self.entityModelList.lastObject;
+    headEntity.footEntity=[AcFootEntity entity:footViewBlock];
+}
+
 /**
  *  添加一个视图到cell上面,具体加载在内部控制
  *      注意所有block使用外部变量都需要使用弱引用
@@ -224,12 +275,12 @@
         [AcTool showAlertView:@"contentViewBlock == nil"];
         return;
     }
-    AcContentEntity *entity = [AcContentEntity entity:contentViewBlock eventBlock:eventBlock];
-    if(self.headEntityList.count==0)
+    if(self.entityModelList.count==0)
     {
         [self addHeadView:nil];
     }
-    AcHeadEntity *headEntity = self.headEntityList.lastObject;
+    AcEntityModel *headEntity = self.entityModelList.lastObject;
+    AcContentEntity *entity = [AcContentEntity entity:contentViewBlock eventBlock:eventBlock];
     [headEntity addContentEntitysObject:entity];
 }
 
@@ -248,20 +299,20 @@
     [super reloadData];
 }
 #pragma mark -- tableview-delegate
--(AcHeadEntity *)headEntityWithIndex:(NSInteger)index
+-(AcEntityModel *)entityModelWithIndex:(NSInteger)index
 {
-    if(self.headEntityList.count>index)
+    if(self.entityModelList.count>index)
     {
-        AcHeadEntity *headEntity = self.headEntityList[index];
+        AcEntityModel *headEntity = self.entityModelList[index];
         return headEntity;
     }else{
-        [AcTool showAlertView:@"headEntityList 长度错误"];
+        [AcTool showAlertView:@"entityModelList 长度错误"];
         return nil;
     }
 }
 -(UIView *)headView:(NSInteger)section
 {
-    AcHeadEntity *headEntity = [self headEntityWithIndex:section];
+    AcHeadEntity *headEntity = [self entityModelWithIndex:section].headEntity;
     if(headEntity.viewBlock==nil)
     {
         [AcTool showAlertView:@"headEntity viewBlock == nil"];
@@ -270,14 +321,27 @@
         return headEntity.viewBlock();
     }
 }
+-(UIView *)footView:(NSInteger)section
+{
+    AcFootEntity *footEntity = [self entityModelWithIndex:section].footEntity;
+    if(footEntity==nil)
+    {
+        return nil;//[UIView new];//[[UIView alloc]initWithFrame:CGRectZero];
+    }else   if(footEntity.viewBlock==nil){
+        [AcTool showAlertView:@"footEntity viewBlock == nil"];
+        return nil;
+    }else{
+        return footEntity.viewBlock();
+    }
+}
 -(AcContentEntity *)contentEntityWithIndex:(NSIndexPath *)indexPath
 {
-    if(self.headEntityList.count<=indexPath.section)
+    if(self.entityModelList.count<=indexPath.section)
     {
-        [AcTool showAlertView:@"headEntityList 长度错误"];
+        [AcTool showAlertView:@"entityModelList 长度错误"];
         return nil;
     }
-    AcHeadEntity *headEntity = self.headEntityList[indexPath.section];
+    AcEntityModel *headEntity = self.entityModelList[indexPath.section];
     if(headEntity.contentEntitys.count<=indexPath.row)
     {
         [AcTool showAlertView:@"headEntity.contentEntitys 长度错误"];
@@ -294,7 +358,7 @@
     AcContentEntity *contentEntity = [self contentEntityWithIndex:indexPath];
     if(contentEntity.viewBlock==nil)
     {
-        [AcTool showAlertView:@"headEntity viewBlock == nil"];
+        [AcTool showAlertView:@"contentEntity viewBlock == nil"];
         return nil;
     }else{
         return contentEntity.viewBlock(cell);
@@ -308,18 +372,18 @@
 }
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    if(self.headEntityList.count>section)
+    if(self.entityModelList.count>section)
     {
-        AcHeadEntity *headEntity = self.headEntityList[section];
+        AcEntityModel *headEntity = self.entityModelList[section];
         return headEntity.contentEntitys.count;
     }else{
-        [AcTool showAlertView:@"headEntityList 长度错误"];
+        [AcTool showAlertView:@"entityModelList 长度错误"];
         return 0;
     }
 }
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
-    return self.headEntityList.count;
+    return self.entityModelList.count;
 }
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
@@ -349,13 +413,20 @@
 
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
 {
-    return [self tableView:tableView viewForHeaderInSection:section].frame.size.height;
+    return [self headView:section].frame.size.height;
 }
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
 {
     return [self headView:section];
 }
-
+-(CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section
+{
+    return [self footView:section].frame.size.height;
+}
+-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+    return [self footView:section];
+}
 @end
 
 

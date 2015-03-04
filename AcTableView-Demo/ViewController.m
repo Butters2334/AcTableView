@@ -52,6 +52,11 @@
     }];
     [self.view addSubview:tv];
     
+    [tv addFootView:^AcFooterView*{
+        AcFooterView *hView = [[AcFooterView alloc]initWithHeight:10];
+        hView.backgroundColor=[UIColor blackColor];
+        return hView;
+    }];
     
     [tv addHeadView:^AcHeaderView*{
         AcHeaderView *cView = [[AcHeaderView alloc]initWithHeight:20];
@@ -59,11 +64,8 @@
         return cView;
     }];
 
-    [tv addHeadView:^AcHeaderView*{
-        AcHeaderView *hView = [[AcHeaderView alloc]initWithHeight:20];
-        return hView;
-    }];
     [tv addCellView:^AcContentView*(UITableViewCell *cell){
+        cell.separatorInset=UIEdgeInsetsMake(0, 0, 0, 0);
         AcContentView *cView = [[AcContentView alloc]initWithHeight:50];
         cView.backgroundColor=[UIColor yellowColor];
         return cView;

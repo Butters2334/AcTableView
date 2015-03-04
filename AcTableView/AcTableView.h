@@ -26,6 +26,12 @@
 @interface AcHeaderView : AcView
 @end
 /**
+ *  底部视图实体
+ */
+@interface AcFooterView : AcHeaderView
+@end
+
+/**
     内容视图实体
  */
 @interface AcContentView :AcView
@@ -35,6 +41,8 @@
 
 //头部视图构成block
 typedef AcHeaderView*(^AcHeadViewBlock)(void);
+//底部视图构成block
+typedef AcFooterView*(^AcFootViewBlock)(void);
 //内容视图构成block
 //typedef AcContentView*(^AcContentViewBlock)(void);
 typedef AcContentView*(^AcContentViewBlock)(UITableViewCell *cell);
@@ -55,6 +63,10 @@ typedef void(^AcContentEventBlock)(UITableView *tableView);
  *  增加一个head视图,之后添加的cell都划分为该head视图下
  */
 -(void)addHeadView:(AcHeadViewBlock)headViewBlock;
+/**
+ *  添加一个foot视图,只添加在当前的head对应的视图上面,重复添加会重置原来的foot视图block
+ */
+-(void)addFootView:(AcFootViewBlock)footViewBlock;
 /**
  *  添加一个视图到cell上面,具体加载在内部控制
  *      注意所有block使用外部变量都需要使用弱引用

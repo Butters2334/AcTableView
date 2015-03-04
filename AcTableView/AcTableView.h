@@ -36,11 +36,12 @@
 //头部视图构成block
 typedef AcHeaderView*(^AcHeadViewBlock)(void);
 //内容视图构成block
-typedef AcContentView*(^AcContentViewBlock)(void);
-//typedef AcContentView*(^AcContentViewBlock)(UITableViewCell *cell);
+//typedef AcContentView*(^AcContentViewBlock)(void);
+typedef AcContentView*(^AcContentViewBlock)(UITableViewCell *cell);
 //内容视图点击block
-typedef void(^AcContentEventBlock)(void);
+//typedef void(^AcContentEventBlock)(void);
 //typedef void(^AcContentEventBlock)(UITableViewCell *cell);
+typedef void(^AcContentEventBlock)(UITableView *tableView);
 
 /**
  * 通过调用函数添加子cell块,可添加head块或者cell块,根据顺序

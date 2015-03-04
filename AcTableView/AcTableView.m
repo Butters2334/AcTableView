@@ -287,15 +287,20 @@
 }
 -(UIView *)contentView:(NSIndexPath *)indexPath
 {
+    return [self contentView:indexPath paramCell:nil];
+}
+-(UIView *)contentView:(NSIndexPath *)indexPath paramCell:(UITableViewCell *)cell
+{
     AcContentEntity *contentEntity = [self contentEntityWithIndex:indexPath];
     if(contentEntity.viewBlock==nil)
     {
         [AcTool showAlertView:@"headEntity viewBlock == nil"];
         return nil;
     }else{
-        return contentEntity.viewBlock();
+        return contentEntity.viewBlock(cell);
     }
 }
+
 -(AcContentEventBlock)contentEvent:(NSIndexPath *)indexPath
 {
     AcContentEntity *contentEntity = [self contentEntityWithIndex:indexPath];
@@ -324,7 +329,7 @@
     {
         cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:indentifier];
         cell.backgroundColor=[UIColor clearColor];
-        [cell addSubview:[self contentView:indexPath]];
+        [cell addSubview:[self contentView:indexPath paramCell:cell]];
     }
     return cell;
 }
@@ -334,7 +339,7 @@
     AcContentEventBlock eventBlock = [self contentEvent:indexPath];
     if(eventBlock)
     {
-        eventBlock();
+        eventBlock(tableView);
     }
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath

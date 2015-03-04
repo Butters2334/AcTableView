@@ -19,11 +19,11 @@
     [super viewDidLoad];
     
     AcTableView *tv = [[AcTableView alloc]initWithFrame:[UIScreen mainScreen].bounds];
-    [tv addCellView:^AcContentView*{
+    [tv addCellView:^AcContentView*(UITableViewCell *cell){
         AcContentView *cView = [[AcContentView alloc]initWithHeight:40];
         cView.backgroundColor = [UIColor redColor];
         return cView;
-    } touchEvent:^{
+    } touchEvent:^(UITableView *tableView){
         NSLog(@"touch red");
     }];
     [tv addHeadView:^AcHeaderView*{
@@ -31,11 +31,11 @@
         cView.backgroundColor = [UIColor lightGrayColor];
         return cView;
     }];
-    [tv addCellView:^AcContentView*{
+    [tv addCellView:^AcContentView*(UITableViewCell *cell){
         AcContentView *cView = [[AcContentView alloc]initWithHeight:40];
         cView.backgroundColor = [UIColor greenColor];
         return cView;
-    } touchEvent:^{
+    } touchEvent:^(UITableView *tableView){
         NSLog(@"touch green");
     }];
     [tv addHeadView:^AcHeaderView*{
@@ -43,14 +43,35 @@
         cView.backgroundColor = [UIColor lightGrayColor];
         return cView;
     }];
-    [tv addCellView:^AcContentView*{
+    [tv addCellView:^AcContentView*(UITableViewCell *cell){
         AcContentView *cView = [[AcContentView alloc]initWithHeight:40];
         cView.backgroundColor = [UIColor blueColor];
         return cView;
-    } touchEvent:^{
+    } touchEvent:^(UITableView *tableView){
         NSLog(@"touch blue");
     }];
     [self.view addSubview:tv];
+    
+    
+    [tv addHeadView:^AcHeaderView*{
+        AcHeaderView *cView = [[AcHeaderView alloc]initWithHeight:20];
+        cView.backgroundColor = [UIColor lightGrayColor];
+        return cView;
+    }];
+
+    [tv addHeadView:^AcHeaderView*{
+        AcHeaderView *hView = [[AcHeaderView alloc]initWithHeight:20];
+        return hView;
+    }];
+    [tv addCellView:^AcContentView*(UITableViewCell *cell){
+        AcContentView *cView = [[AcContentView alloc]initWithHeight:50];
+        cView.backgroundColor=[UIColor yellowColor];
+        return cView;
+    } touchEvent:^(UITableView *tableView){
+        NSLog(@"touch yellow");
+    }];
+    
+    
 }
 
 - (void)didReceiveMemoryWarning
